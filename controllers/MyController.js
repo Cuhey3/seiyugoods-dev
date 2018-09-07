@@ -7,16 +7,26 @@ module.exports = function(app) {
 
   app.post("/", function(req, res) {
     const body = req.body;
-    // request asesrtion
     const locals = { body };
-    service
-      .search(req)
+    service.addTask(req)
       .then(function(response) {
-        locals.response = JSON.stringify(response);
-        res.render("index", locals);
+        locals.status = response.status;
+        res.render("accepted", locals);
       }).catch(function(error) {
-        locals.error = JSON.stringify(error);
-        res.render("index", locals);
+        console.log('/(POST) error', error);
       });
+  });
+
+  app.get("/result", function(req, res) {
+    service.getResultList(req).then(function(results) {
+      res.render("result_list", { results });
+    });
+  });
+
+  app.get("/result/:requestId", function(req, res) {
+    const requestId = req.params.requestId;
+    service.findResultDetail(req).then(function(result) {
+      res.render("result_detail", { requestId, result });
+    });
   });
 };
