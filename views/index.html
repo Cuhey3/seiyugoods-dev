@@ -1,0 +1,12 @@
+<html>
+  <body>
+  <form method="POST">
+  <input type="text" name="keywords" value="{{body.keywords}}"></input>
+  <input type="submit" value="送信">
+</form>
+{% if response or error %}
+response: {{response}}
+error: {{error}}
+{% endif %}
+</body>
+</html>
