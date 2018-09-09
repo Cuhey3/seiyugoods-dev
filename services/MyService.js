@@ -1,4 +1,11 @@
 const amazon = require('amazon-product-api');
+const expectation = require('../util/ObjectExpectationUtil');
+const validator = expectation.createValidator({
+  "Error": [{
+    "Code": ["RequestThrottled"],
+    "Message": ["AWS Access Key ID: " + process.env['AWS_ID'] + ". You are submitting requests too quickly. Please retry your requests at a slower rate."]
+  }]
+});
 
 const client = amazon.createClient({
   awsId: process.env['AWS_ID'],
@@ -41,11 +48,13 @@ module.exports = {
         results.shift();
       }
     }).catch(function(error) {
+      const validatorResult = validator(error);
       results.push({
         timestamp: new Date().getTime().toString(),
         keywords,
         data: error,
-        status: 'error'
+        status: 'error',
+        errorType: validatorResult === true ? "too quickly error" : ""
       });
       while (results.length > 100) {
         results.shift();

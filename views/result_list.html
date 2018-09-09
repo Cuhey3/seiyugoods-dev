@@ -4,12 +4,14 @@
     <th>timestamp</th>
     <th>keywords</th>
     <th>status</th>
+    <th>errorType</th>
   </tr>
   {% for result in results %}
   <tr>
     <td><a href="/result/{{result.timestamp}}">{{result.timestamp}}</a></td>
     <td>{{result.keywords}}</td>
     <td>{{result.status}}</td>
+    <td>{{result.errorType}}</td>
   </tr>
   {% endfor %}
 </table>
