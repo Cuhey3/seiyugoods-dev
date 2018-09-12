@@ -62,34 +62,76 @@ function WorkerCreator(initialProcess, mainProcess, completeProcess, retryProces
       .catch(retryProcessCreator(this.workerCreator));
   };
 }
+
 WorkerCreator.prototype.create = function(item) {
   return this.workerCreator(item);
 };
 
-function Queue(workerCreator) {
+function Queue(workerCreator, params = {}) {
   this.items = [];
   this.workerCreator = workerCreator;
   this.worker = null;
+  this.period = params.period || 1000;
+  this.initialDelayPromise = null;
+  this.initialDelay = params.initialDelay || 1000;
+  this.isStart = false;
 }
 
 Queue.prototype.addTask = function(item) {
   this.items.push(item);
+  this.consume();
 };
+
+// TBD
+Queue.prototype.start = function() {
+  const self = this;
+  if (!self.initialDelayPromise) {
+    self.initialDelayPromise = new Promise(function(resolve, reject) {
+      console.log('initial delay...', self.initialDelay);
+      setTimeout(function() {
+        resolve();
+      }, self.initialDelay);
+    });
+  }
+  self.initialDelayPromise.then(function() {
+    self.isStart = true;
+    self.consume();
+  });
+};
+
+Queue.prototype.stop = function() {
+  this.isStart = false;
+}
+
 
 Queue.prototype.consume = function() {
   const self = this;
-  if (self.items.length > 0 && self.worker === null) {
+  if (self.isStart && self.items.length > 0 && self.worker === null) {
     const item = self.items.shift();
     self.worker = self.workerCreator.create(item).then(function(item) {
       console.log('return from worker', item);
-      self.worker = null;
+      console.log('sleeping...', self.period);
+      setTimeout(function() {
+        self.worker = null;
+        self.consume();
+      }, self.period);
     }).catch(function() {
-      self.worker = null;
+      console.log('sleeping...', self.period);
+      setTimeout(function() {
+        self.worker = null;
+        self.consume();
+      }, self.period);
     });
+    console.log("worker set");
   }
 };
 
 
-const queue = new Queue(new WorkerCreator(initialProcess, mainProcess, completeProcess, retryProcessCreator));
-queue.addTask({ "foo": "bar" });
-queue.consume();
+//const queue = new Queue(new WorkerCreator(initialProcess, mainProcess, completeProcess, retryProcessCreator), { period: 10000, initialDelay: 5000 });
+//queue.addTask({ "foo": "bar" });
+//queue.addTask({ "foo": "wao" });
+
+module.exports = {
+  Queue,
+  WorkerCreator
+};
