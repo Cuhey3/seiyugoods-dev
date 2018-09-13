@@ -18,6 +18,20 @@ const isSignatureDoesNotMatchError = createValidator({
   }]
 });
 
+const isNoExactMatchesError = createValidator({
+  "$": { "xmlns": "http://webservices.amazon.com/AWSECommerceService/2013-08-01" },
+  "Items": [{
+    "Request": [{
+      "IsValid": ["True"],
+      "Errors": [{
+        "Error": [{ "Code": ["AWS.ECommerceService.NoExactMatches"], "Message": ["リクエストに該当する結果がありません。"] }]
+      }]
+    }],
+    "TotalResults": ["0"],
+    "TotalPages": ["0"]
+  }]
+})
+
 const isValidResponse = createValidator({
   "Items": [{
     "Request": [{
@@ -127,6 +141,20 @@ const myQueue = new Queue(new WorkerCreator(
       else if (isSignatureDoesNotMatchError(item.data) === true) {
         item.errorType = "signature_does_not_match_error";
         console.log(item.errorType);
+      }
+      else if (isNoExactMatchesError(item.data) === true) {
+        if (!(String(item.requestStartTime) in resultTimeStamps)) {
+          resultTimeStamps[String(item.requestStartTime)] = true;
+          var result = {
+            keywords: item.keywords,
+            data: item.aggregatedData,
+            itemCount: item.aggregatedData.length,
+            timestamp: String(item.requestStartTime),
+            processTime: new Date().getTime() - item.requestStartTime
+          }
+          results.push(result);
+        }
+        return Promise.resolve(item);
       }
       else {
         console.log('unrecognized error');
