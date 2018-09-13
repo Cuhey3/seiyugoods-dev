@@ -147,7 +147,7 @@ myQueue.start();
 
 module.exports = {
   addTask: function(req) {
-    myQueue.addTask({ Keywords: req.body.keywords });
+    myQueue.addTask({ keywords: req.body.keywords });
     return Promise.resolve({ status: 'accepted' });
   },
   getResultList: function(req) {
