@@ -195,7 +195,7 @@ function objectValueIs(objArg) {
             parent: any
           }));
           if (objArg[key].funcInfo) {
-            console.log(objArg[key].funcInfo);
+            //console.log(objArg[key].funcInfo);
           }
         }
         else if (partialResult !== true) {

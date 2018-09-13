@@ -18,7 +18,9 @@ const mainProcess = function(item) {
   return new Promise(function(resolve, reject) {
     const random = Math.random();
     console.log('main proceses', random);
-    if (random > 0.7) {
+    if (random > 0.1) {
+      item.successCount = (item.successCount || 0) + 1;
+      console.log('successCount', item.successCount);
       resolve(item);
     }
     else {
@@ -27,12 +29,32 @@ const mainProcess = function(item) {
   });
 };
 
+const continuousProcessCreator = function(creator) {
+  console.log('continusouProcessCreator called');
+  console.log('continusouProcessCreator is', typeof creator);
+  return function(item) {
+    console.log('check continuous', item);
+    if (item.successCount > 5) {
+      return Promise.resolve(item);
+    }
+    else {
+      return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+          resolve(item);
+        });
+      }).then(creator);
+    }
+  };
+};
+
 const completeProcess = function(item) {
   console.log('complete', item);
   return Promise.resolve(item);
 };
 
 const retryProcessCreator = function(creator) {
+  console.log('retryProcessCreator called');
+  console.log('retryProcessCreator is', typeof creator);
   const delayer = function(item) {
     return 500 * Math.pow(1.5, item.count);
   };
@@ -49,17 +71,22 @@ const retryProcessCreator = function(creator) {
   }
 }
 
-function WorkerCreator(initialProcess, mainProcess, completeProcess, retryProcessCreator) {
+function WorkerCreator(initialProcess, mainProcess, continuousProcessCreator, completeProcess, retryProcessCreator) {
   this.initialProcess = initialProcess;
   this.mainProcess = mainProcess;
   this.completeProcess = completeProcess;
   this.retryProcessCreator = retryProcessCreator;
+  const self = this;
   this.workerCreator = function(item) {
     return Promise.resolve(item)
+      .then(function(item) {
+        return item;
+      })
       .then(initialProcess)
       .then(mainProcess)
+      .then(continuousProcessCreator(self.workerCreator))
       .then(completeProcess)
-      .catch(retryProcessCreator(this.workerCreator));
+      .catch(retryProcessCreator(self.workerCreator));
   };
 }
 
@@ -82,7 +109,6 @@ Queue.prototype.addTask = function(item) {
   this.consume();
 };
 
-// TBD
 Queue.prototype.start = function() {
   const self = this;
   if (!self.initialDelayPromise) {
@@ -109,7 +135,6 @@ Queue.prototype.consume = function() {
   if (self.isStart && self.items.length > 0 && self.worker === null) {
     const item = self.items.shift();
     self.worker = self.workerCreator.create(item).then(function(item) {
-      console.log('return from worker', item);
       console.log('sleeping...', self.period);
       setTimeout(function() {
         self.worker = null;
@@ -124,13 +149,16 @@ Queue.prototype.consume = function() {
     });
     console.log("worker set");
   }
+  else if (self.items.length === 0) {
+    console.log('queue is empty.');
+  }
 };
 
 
-//const queue = new Queue(new WorkerCreator(initialProcess, mainProcess, completeProcess, retryProcessCreator), { period: 10000, initialDelay: 5000 });
+//const queue = new Queue(new WorkerCreator(initialProcess, mainProcess, continuousProcessCreator, completeProcess, retryProcessCreator), { period: 1000, initialDelay: 1000 });
 //queue.addTask({ "foo": "bar" });
 //queue.addTask({ "foo": "wao" });
-
+//queue.start();
 module.exports = {
   Queue,
   WorkerCreator

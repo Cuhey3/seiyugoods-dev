@@ -11,7 +11,6 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "amazon-product-api": "^0.4.4",
     "body-parser": "^1.18.3",
     "ejs": "^2.5.6",
     "express": "^4.15.2",

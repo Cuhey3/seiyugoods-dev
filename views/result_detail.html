@@ -1,3 +1,10 @@
 検索結果詳細ページ<br>
 requestId: {{requestId}}
-result: {{result|dump}}
+keywords: {{result.keywords}}
+itemCount: {{result.itemCount}}
+<table border="1">
+  <tr><th>title</th><th>image</th></tr>
+  {% for item in result.data %}
+  <tr><td>{{item.ItemAttributes[0].Title[0]}}</td><td>{{item.LargeImage[0].URL[0]}}</td></tr>
+  {% endfor %}
+</table>

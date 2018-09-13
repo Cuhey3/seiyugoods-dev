@@ -3,15 +3,15 @@
   <tr>
     <th>timestamp</th>
     <th>keywords</th>
-    <th>status</th>
-    <th>errorType</th>
+    <th>itemCount</th>
+    <th>processTime</th>
   </tr>
   {% for result in results %}
   <tr>
     <td><a href="/result/{{result.timestamp}}">{{result.timestamp}}</a></td>
     <td>{{result.keywords}}</td>
-    <td>{{result.status}}</td>
-    <td>{{result.errorType}}</td>
+    <td>{{result.itemCount}}</td>
+    <td>{{result.processTime}}</td>
   </tr>
   {% endfor %}
 </table>
